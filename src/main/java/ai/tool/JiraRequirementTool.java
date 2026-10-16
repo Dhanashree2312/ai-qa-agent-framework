@@ -83,6 +83,10 @@ public class JiraRequirementTool implements AgentTool {
 
         if (!response.ok()) {
 
+            System.out.println(
+                    "Jira response body: " + response.text()
+            );
+
             throw new RuntimeException(
                     "Failed to retrieve Jira issue. Status: "
                             + response.status()
@@ -119,6 +123,7 @@ public class JiraRequirementTool implements AgentTool {
                         + requirementText
         );
 
+        System.out.println("JIRA_ISSUE_KEY = " + issueKey);
         return requirementText;
     }
 
