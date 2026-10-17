@@ -10,7 +10,7 @@ import java.util.List;
 
 public class TestCaseReviewAgentTest {
 
-    @Test
+    @Test(groups="integration")
     public void reviewGeneratedTestCases() {
 
         // Agent 1

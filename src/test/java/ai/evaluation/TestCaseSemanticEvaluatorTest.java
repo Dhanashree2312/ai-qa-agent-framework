@@ -20,7 +20,7 @@ public class TestCaseSemanticEvaluatorTest{
         jiraRequirementTool = new JiraRequirementTool();
     }
 
-    @Test
+    @Test(groups="integration")
     public void evaluateTestCase(){
         List<TestStep> testSteps = new ArrayList<>();
         TestStep testStep1 = new TestStep(1,"Enter valid username and password.","Username and password should be entered.");

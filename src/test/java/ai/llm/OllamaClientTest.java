@@ -4,7 +4,7 @@ import com.microsoft.playwright.APIResponse;
 import org.testng.annotations.Test;
 
 public class OllamaClientTest {
-    @Test
+    @Test(groups="integration")
     public void askOllama(){
         OllamaClient ollamaClient = new OllamaClient();
 

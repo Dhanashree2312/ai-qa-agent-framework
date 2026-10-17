@@ -7,7 +7,7 @@ import java.util.List;
 
 public class TestCaseGeneratorTest {
 
-    @Test
+    @Test(groups="integration")
     public void generateTestCasesFromJira() {
         //Generate requirement from JiraRequirementTool
         JiraRequirementTool jiraTool = new JiraRequirementTool();

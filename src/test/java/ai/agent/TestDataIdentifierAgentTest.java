@@ -10,7 +10,7 @@ import java.util.List;
 
 public class TestDataIdentifierAgentTest {
 
-    @Test
+    @Test(groups="integration")
     public void generateTestDataFromAgent1AndAgent2() {
 
         // =====================================================

@@ -15,7 +15,7 @@ public class TestCaseGenerationAgentTest {
                 new TestCaseGenerationAgent();
     }
 
-    @Test
+    @Test(groups = "integration")
     public void generateTestCasesWithAgent() {
 
         List<TestCase> testCases =

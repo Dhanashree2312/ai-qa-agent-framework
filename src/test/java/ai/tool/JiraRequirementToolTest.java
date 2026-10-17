@@ -5,7 +5,7 @@ import org.testng.annotations.Test;
 
 public class JiraRequirementToolTest {
 
-    @Test
+    @Test(groups="integration")
     public void getJiraRequirement() {
 
         JiraRequirementTool jiraRequirementTool =

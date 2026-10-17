@@ -13,7 +13,7 @@ import java.util.List;
 
 public class TestSuiteEvaluationIntegrationTest {
 
-    @Test
+    @Test(groups="integration")
     public void shouldEvaluateJiraGeneratedTestSuite() {
 
         TestCaseGenerationAgent agent = new TestCaseGenerationAgent();
