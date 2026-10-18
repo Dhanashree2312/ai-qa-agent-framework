@@ -1,3 +1,4 @@
+
 package ai.agent;
 
 import ai.model.TestCase;
@@ -7,36 +8,15 @@ import java.util.List;
 
 public class TestCaseGenerationAgentTest {
 
-    private TestCaseGenerationAgent agent;
-
-    public TestCaseGenerationAgentTest() {
-
-        agent =
-                new TestCaseGenerationAgent();
-    }
-
     @Test(groups = "integration")
     public void generateTestCasesWithAgent() {
 
+        TestCaseGenerationAgent agent =
+                new TestCaseGenerationAgent();
+
         List<TestCase> testCases =
-                agent.generateTestCasesFromJira(
-                        "SCRUM-5"
-                );
+                agent.generateTestCasesFromJira("SCRUM-5");
 
-        System.out.println(
-                "\n===== GENERATED TEST CASES ====="
-        );
-
-        for (TestCase testCase :
-                testCases) {
-
-            System.out.println(
-                    testCase
-            );
-        }
-
-        System.out.println(
-                "================================"
-        );
+        // Keep your existing assertions or validation here.
     }
 }
