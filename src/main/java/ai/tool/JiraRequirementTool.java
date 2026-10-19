@@ -1,3 +1,4 @@
+
 package ai.tool;
 
 import com.google.gson.Gson;
@@ -15,7 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
 
-public class JiraRequirementTool implements AgentTool {
+public class JiraRequirementTool implements AgentTool, AutoCloseable {
 
     private final APIRequestContext requestContext;
     private final Playwright playwright;
@@ -29,9 +30,7 @@ public class JiraRequirementTool implements AgentTool {
                 playwright.request().newContext(
                         new APIRequest.NewContextOptions()
                                 .setBaseURL(
-                                        ConfigReader.get(
-                                                "JIRA_BASE_URL"
-                                        )
+                                        ConfigReader.get("JIRA_BASE_URL")
                                 )
                                 .setExtraHTTPHeaders(
                                         Map.of(
@@ -44,24 +43,17 @@ public class JiraRequirementTool implements AgentTool {
         gson = new Gson();
     }
 
-    public APIResponse getRequirement(
-            String issueKey) {
+    public APIResponse getRequirement(String issueKey) {
 
-        String email =
-                ConfigReader.get("JIRA_EMAIL");
+        String email = ConfigReader.get("JIRA_EMAIL");
+        String token = ConfigReader.get("JIRA_API_TOKEN");
 
-        String token =
-                ConfigReader.get("JIRA_API_TOKEN");
-
-        String credentials =
-                email + ":" + token;
+        String credentials = email + ":" + token;
 
         String encodedCredentials =
                 Base64.getEncoder()
                         .encodeToString(
-                                credentials.getBytes(
-                                        StandardCharsets.UTF_8
-                                )
+                                credentials.getBytes(StandardCharsets.UTF_8)
                         );
 
         return requestContext.get(
@@ -69,115 +61,93 @@ public class JiraRequirementTool implements AgentTool {
                 RequestOptions.create()
                         .setHeader(
                                 "Authorization",
-                                "Basic " +
-                                        encodedCredentials
+                                "Basic " + encodedCredentials
                         )
         );
     }
 
-    public String getRequirementText(
-            String issueKey) {
+    public String getRequirementText(String issueKey) {
 
-        APIResponse response =
-                getRequirement(issueKey);
+        APIResponse response = getRequirement(issueKey);
 
-        if (!response.ok()) {
+        try {
+            if (!response.ok()) {
+                throw new RuntimeException(
+                        "Failed to retrieve Jira issue. Status: "
+                                + response.status()
+                                + ", Response: "
+                                + response.text()
+                );
+            }
 
-            System.out.println(
-                    "Jira response body: " + response.text()
-            );
+            JsonObject issue =
+                    gson.fromJson(response.text(), JsonObject.class);
 
-            throw new RuntimeException(
-                    "Failed to retrieve Jira issue. Status: "
-                            + response.status()
-            );
+            JsonObject fields = issue.getAsJsonObject("fields");
+
+            String title = fields.get("summary").getAsString();
+
+            JsonObject description =
+                    fields.getAsJsonObject("description");
+
+            String requirementText = extractText(description);
+
+            System.out.println("Title: " + title);
+            System.out.println("Requirement: " + requirementText);
+            System.out.println("JIRA_ISSUE_KEY = " + issueKey);
+
+            return requirementText;
+
+        } finally {
+            response.dispose();
         }
-
-        JsonObject issue =
-                gson.fromJson(
-                        response.text(),
-                        JsonObject.class
-                );
-
-        JsonObject fields =
-                issue.getAsJsonObject("fields");
-
-        String title =
-                fields.get("summary")
-                        .getAsString();
-
-        JsonObject description =
-                fields.getAsJsonObject(
-                        "description"
-                );
-
-        System.out.println(
-                "Title: " + title
-        );
-
-        String requirementText =
-                extractText(description);
-
-        System.out.println(
-                "Requirement: "
-                        + requirementText
-        );
-
-        System.out.println("JIRA_ISSUE_KEY = " + issueKey);
-        return requirementText;
     }
 
-    private String extractText(
-            JsonObject description) {
+    private String extractText(JsonObject description) {
 
-        StringBuilder result =
-                new StringBuilder();
+        StringBuilder result = new StringBuilder();
 
-        extractText(description, result);
+        extractText((JsonElement) description, result);
 
-        return result.toString();
+        return result.toString().trim();
     }
 
     private void extractText(
             JsonElement element,
             StringBuilder result) {
 
-        if (element == null ||
-                element.isJsonNull()) {
-
+        if (element == null || element.isJsonNull()) {
             return;
         }
 
         if (element.isJsonObject()) {
 
-            JsonObject object =
-                    element.getAsJsonObject();
+            JsonObject object = element.getAsJsonObject();
 
-            if (object.has("text")) {
+            if (object.has("text")
+                    && !object.get("text").isJsonNull()) {
 
                 result.append(
-                        object.get("text")
-                                .getAsString()
+                        object.get("text").getAsString()
                 );
 
                 result.append(" ");
             }
 
-            if (object.has("content")) {
+            if (object.has("content")
+                    && object.get("content").isJsonArray()) {
 
-                JsonArray content =
-                        object.getAsJsonArray(
-                                "content"
-                        );
+                JsonArray content = object.getAsJsonArray("content");
 
-                for (JsonElement child :
-                        content) {
-
-                    extractText(
-                            child,
-                            result
-                    );
+                for (JsonElement child : content) {
+                    extractText(child, result);
                 }
+            }
+
+        } else if (element.isJsonArray()) {
+
+            for (JsonElement child : element.getAsJsonArray()) {
+                extractText(child, result);
             }
         }
     }
@@ -189,13 +159,22 @@ public class JiraRequirementTool implements AgentTool {
 
     @Override
     public String getDescription() {
-
         return "Retrieves the requirement text from a Jira issue.";
     }
 
     @Override
     public String execute(String input) {
-
         return getRequirementText(input);
     }
+
+
+    @Override
+    public void close() {
+        try {
+            requestContext.dispose();
+        } finally {
+            playwright.close();
+        }
+    }
+
 }
